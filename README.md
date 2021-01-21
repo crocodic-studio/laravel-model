@@ -5,7 +5,7 @@ An alternative laravel eloquent
 Laravel 5.* | 6.* | 7.*
 
 ### Install Command
-``composer require crocodicstudio/cbmodel=^1.0``
+``composer require crocodic/laravel-model=^1.0``
 
 ### 1. Create a model
 
