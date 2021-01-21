@@ -1,5 +1,5 @@
-# CB Laravel Model Repository
-An alternative about laravel eloquent
+# Laravel Model
+An alternative laravel eloquent
 
 ### Requirement
 Laravel 5.* | 6.* | 7.*
