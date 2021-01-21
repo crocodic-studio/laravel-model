@@ -1,5 +1,5 @@
 {
-    "name": "crocodicstudio/cbmodel",
+    "name": "crocodic/laravel-model",
     "description": "Boost your laravel database relation with model enhancement",
     "type": "library",
     "license": "MIT",
@@ -21,13 +21,13 @@
     },
     "autoload": {
       "psr-4": {
-        "crocodicstudio\\cbmodel\\": "src/"
+        "Crocodic\\LaravelModel\\": "src/"
       }
     },
     "extra": {
       "laravel": {
         "providers": [
-          "crocodicstudio\\cbmodel\\CBModelServiceProvider"
+          "Crocodic\\LaravelModel\\LaravelModelServiceProvider"
         ]
       }
     }
