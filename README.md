@@ -32,7 +32,7 @@ It will auto create a new file at ```/app/Models/Books.php``` with the following
 namespace App\Models;
 
 use DB;
-use Crocodicstudio\Cbmodel\Core\Model;
+use Crocodic\LaravelModel\Core\Model;
 
 class Books extends Model
 {
