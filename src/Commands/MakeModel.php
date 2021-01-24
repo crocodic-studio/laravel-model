@@ -1,7 +1,7 @@
-<?php namespace crocodicstudio\cbmodel\Commands;
+<?php namespace Crocodic\LaravelModel\Commands;
 
 use App;
-use crocodicstudio\cbmodel\Helpers\Helper;
+use Crocodic\LaravelModel\Helpers\Helper;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Console\Command;
 use Illuminate\Support\Str;
@@ -20,7 +20,7 @@ class MakeModel extends Command
      *
      * @var string
      */
-    protected $description = 'Make a model from table';
+    protected $description = 'Crocodic Laravel Model: Create a new model class';
 
     /**
      * Execute the console command.
@@ -45,18 +45,18 @@ class MakeModel extends Command
     }
 
     private function generateByTable($table, $connection, $repoName) {
-        $path = app_path('Models');
+        $path = Helper::appPath('Models');
 
         if(!file_exists($path)) {
             @mkdir($path,0755);
         }
 
-        $pathRepositories = app_path("Repositories");
+        $pathRepositories = Helper::appPath("Repositories");
         if(!file_exists($pathRepositories)) {
             @mkdir($pathRepositories, 0755);
         }
 
-        $pathServices = app_path("Services");
+        $pathServices = Helper::appPath("Services");
         if(!file_exists($pathServices)) {
             @mkdir($pathServices, 0755);
         }
@@ -98,16 +98,16 @@ class MakeModel extends Command
             $repoName = $tableStudly;
         }
 
-        file_put_contents($path.'/'.$repoName.'.php', $template);
-        if(file_exists($path.'/'.$repoName.'.php')) {
+        file_put_contents($path.'/'.$repoName.'Model.php', $template);
+        if(file_exists($path.'/'.$repoName.'Model.php')) {
             $this->info($repoName." model has been updated!");
         }else{
             $this->info($repoName." model has been created!");
         }
 
         //create repository
-        if(!file_exists($pathRepositories.'/'.$repoName.'Repository.php')) {
-            file_put_contents($pathRepositories.'/'.$repoName.'Repository.php', $repoTemplate);
+        if(!file_exists($pathRepositories.'/'.$repoName.'.php')) {
+            file_put_contents($pathRepositories.'/'.$repoName.'.php', $repoTemplate);
             $this->info($repoName." repository has been created!");
         }
 

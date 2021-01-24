@@ -6,15 +6,24 @@
  * Time: 10:11 PM
  */
 
-namespace crocodicstudio\cbmodel\Core;
+namespace Crocodic\LaravelModel\Core;
 
 
 abstract class ModelAbstract
 {
-    public $connection = "mysql";
+    public function setConnection()
+    {
+        return null;
+    }
 
-    public $table = null;
+    public function setTable()
+    {
+        return null;
+    }
 
-    public $primary_key = "id";
+    public function setPrimaryKey()
+    {
+        return null;
+    }
 
 }

@@ -1,6 +1,6 @@
 <?php
 
-namespace crocodicstudio\cbmodel\Helpers;
+namespace Crocodic\LaravelModel\Helpers;
 
 use Illuminate\Support\Facades\DB;
 
@@ -17,5 +17,14 @@ class Helper
         return $pk->getColumns()[0];
     }
 
+
+    public static function appPath($path)
+    {
+        if(!function_exists("app_path")) {
+            return app()->path() . ($path ? DIRECTORY_SEPARATOR . $path : $path);
+        } else {
+            return app_path($path);
+        }
+    }
 
 }

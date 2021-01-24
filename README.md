@@ -1,11 +1,17 @@
-# Laravel Model
-An alternative laravel eloquent
+# Crocodic Laravel Model
+An alternative laravel eloquent. Crocodic Laravel Model using Model, Repository and Service pattern. Model is a class that define anything about table columns. 
+Repository is a class that define your own query method. And Service is a class that should define your own business logic query method.
 
 ### Requirement
-Laravel 5.* | 6.* | 7.*
+Laravel / Lumen 5.* | 6.* | 7.* | 8.*
 
-### Install Command
+### Install Command (Laravel User)
 ``composer require crocodic/laravel-model=^1.0``
+
+### LUMEN USER: 
+after install with the composer then add this bellow to `/bootstrap/app.php` at section `Register Service Providers`
+
+``$app->register(\Crocodic\LaravelModel\LaravelModelServiceProvider::class);``
 
 ### 1. Create a model
 
@@ -25,7 +31,7 @@ created_at (Timestamp)
 name (Varchar) 255
 ```
 
-It will auto create a new file at ```/app/Models/Books.php``` with the following file structure : 
+It will create a new model class file at ```/app/Models/BooksModel.php``` with the following file structure : 
 
 ```php
 <?php
@@ -34,26 +40,55 @@ namespace App\Models;
 use DB;
 use Crocodic\LaravelModel\Core\Model;
 
-class Books extends Model
+class BooksModel extends Model
 {
-    public $tableName = "books";
-    public $connection = "mysql";
-    public $primary_key = "id";
-
     public $id;
     public $created_at;
     public $name;
 }
 ```
+Also create a new Repository class file, and a new Service class file. 
+`/app/Repositories/Books.php`
+`/app/Services/BooksService.php`
 
-### 2. Using CB Model class on your Controller
-Insert ```use App\Models\Books; ``` at top of your controller class name.
+You can set custom connection, table and primary key name
+
+```php
+<?php
+namespace App\Models;
+
+use DB;
+use Crocodic\LaravelModel\Core\Model;
+
+class BooksModel extends Model
+{
+    public $id;
+    public $created_at;
+    public $name;
+    
+    public function setConnection(){
+         return "mysql";
+    }
+
+    public function setTable() {
+        return "books";
+    }   
+
+    public function setPrimaryKey(){
+        return "id";
+    }
+}
+```
+
+### 2. Using Crocodic Laravel Model class on your Controller
+Crocodic Laravel Model use Model, Repository and Service pattern. If you want make a query, please use the Repository one instead of Model Class. Like example bellow: 
+Insert ```use App\Repositories\Books; ``` at top of your controller class name.
 
 ```php
 <?php 
 namespace App\Http\Controllers;
 
-use App\Models\Books;
+use App\Repositories\Books;
 
 class FooController extends Controller {
     
@@ -79,7 +114,7 @@ class FooController extends Controller {
 ?>
 ```
 
-### 3. Using CB Model class that has a relation
+### 3. Using Crocodic Laravel Model class that has a relation
 I assume you have a table ```categories``` for book relation like bellow : 
 ```
 id (Integer) Primary Key
@@ -96,13 +131,13 @@ Now you have to create a model for ```categories``` table, you can following pre
 
 I assume that you have create a ```categories``` model, so make sure that now we have two files in the ```/app/Models/```
 ``` 
-/Books.php
-/Categories.php
+/BooksModel.php
+/CategoriesModel.php
 ```
 Open the Books model , and add this bellow method
 ```php
     /**
-    * @return Categories
+    * @return App\Models\Categories
     */
     public function category() {
         return $this->belongsTo("App\Models\Categories");
@@ -110,7 +145,7 @@ Open the Books model , and add this bellow method
 
     // or 
     /**
-    * @return Categories
+    * @return App\Models\Categories
     */
     public function category() {
         return Categories::find($this->categories_id);
@@ -121,11 +156,10 @@ Then open the FooController
 <?php 
 namespace App\Http\Controllers;
 
-use App\Models\Books;
+use App\Repositories\Books;
 
 class FooController extends Controller {
     
-    ...
     
     public function detail($id)
     {
@@ -145,20 +179,20 @@ class FooController extends Controller {
 ```
 As you can see now we can get the category name by using ```->category()->name``` without any SQL Query or even Database Builder syntax. Also you can recursively go down to your relation with NO LIMIT.
 
-### 4. How to Casting DB Builder Collection output to CB Model Class?
+### 4. How to Casting DB Builder Collection output to Crocodic Laravel Model Class?
 You can easily cast your simple database builder collection to cb model class.
 
 ```php 
 $row = DB::table("books")->where("id",1)->first();
 
-//Cast to CB Model
+//Cast to Crocodic Laravel Model
 $model = new Books($row);
 
 //And then you can use cb model normally
 echo $model->name;
 ```
 
-### 5. How to insert the data with CB Model
+### 5. How to insert the data with Crocodic Laravel Model
 You can easily insert the data with method ```->save()``` like bellow:
 ```php 
 $book = new Books();
@@ -175,7 +209,7 @@ $lastInsertId = $book->id; // get the id from id property
 ...
 ```
 
-### 5. How to update the data with CB Model
+### 5. How to update the data with Crocodic Laravel Model
 You can easily update the data, just find it for first : 
 ```php 
 $book = Books::findById(1);
@@ -244,22 +278,9 @@ $result = FooBar::find($id);
 /**
 * Create a custom query, and result laravel Query Builder collection
 */
-$result = FooBar::table()->where("foo",1)->first();
-
-/**
-* Create a custom query and casting to model object
-*/
-$result = FooBar::query(function($query) {
-    return $query->where("bar",1);
-});
-
-/**
-* Create a custom list query and casting them to model objects
-*/
-$result = FooBar::queryList(function($query) {
-    return $query->where("bar",1);
-});
-
+$result = FooBar::where("foo","=",1)->first();
+// or
+$result = FooBar::table()->where("foo","=",1)->first();
 
 /**
 * Find a record by a specific condition
@@ -320,7 +341,7 @@ class Posts extends Model {
     // etc
     
     /**
-    * @return App\Models\Comments[]
+    * @return Illuminate\Support\Collection
     */
     public function comments() {
         return $this->hasMany(Comments::class);
@@ -328,7 +349,7 @@ class Posts extends Model {
     
     // or with full option
     /**
-    * @return App\Models\Comments[]
+    * @return Illuminate\Support\Collection
     */
     public function comments() {
         return $this->hasMany(Comments::class, "foreign_key", "local_key", function($condition) {

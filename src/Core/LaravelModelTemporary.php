@@ -1,9 +1,9 @@
 <?php
 
-namespace crocodicstudio\cbmodel\Core;
+namespace Crocodic\LaravelModel\Core;
 
 
-class CBModelTemporary
+class LaravelModelTemporary
 {
     private $data;
 

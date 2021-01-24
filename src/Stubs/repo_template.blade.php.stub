@@ -1,10 +1,10 @@
 <?php
 namespace App\Repositories;
 
-use App\Models\{class_name};
+use App\Models\{class_name}Model;
 
-class {class_name}Repository extends {class_name}
+class {class_name} extends {class_name}Model
 {
-    // TODO : Make you own query methods
+    // TODO : Make your own query methods
 
 }

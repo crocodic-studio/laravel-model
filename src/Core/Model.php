@@ -6,20 +6,47 @@
  * Time: 1:28 PM
  */
 
-namespace crocodicstudio\cbmodel\Core;
+namespace Crocodic\LaravelModel\Core;
 
-use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Collection;
 
 class Model extends ModelAbstract
 {
     use ModelSetter;
+
+    public function __construct($row = null)
+    {
+        if($row) {
+            foreach($row as $key=>$value) {
+                $this->{$key} = $value;
+            }
+        }
+    }
+
+    public static function getTable()
+    {
+        $static = new static;
+        return $static->setTable() ? $static->setTable() : $static->getTableFromClass();
+    }
+
+    public static function getPrimaryKey()
+    {
+        $static = new static;
+        return $static->setPrimaryKey() ? $static->setPrimaryKey() : $static->getDefaultPrimaryKey();
+    }
+
+    public static function getConnection()
+    {
+        $static = new static;
+        return $static->setConnection() ? $static->setConnection() : config("database.default", "mysql");
+    }
 
     /**
      * Get last record id
      * @return mixed
      */
     public static function lastId() {
-        return DB::table((new static())->table)->max((new static())->primary_key);
+        return app('db')->table(static::getTable())->max(static::getPrimaryKey());
     }
 
     /**
@@ -33,14 +60,12 @@ class Model extends ModelAbstract
     public function hasMany(string $modelName, string $foreignKey = null, string $localKey = null, callable $condition = null) {
         $childModel = new $modelName();
         $parentModel = new static();
-        $foreignKey = ($foreignKey) ? $foreignKey : $parentModel->table."_".$parentModel->primary_key;
-        $localKey = ($localKey) ? $localKey : $parentModel->primary_key;
+        $foreignKey = ($foreignKey) ? $foreignKey : $parentModel::getTable()."_".$parentModel::getPrimaryKey();
+        $localKey = ($localKey) ? $localKey : $parentModel::getPrimaryKey();
         $localKey = $this->$localKey;
-        return $childModel::queryList(function($query) use ($foreignKey, $localKey, $condition) {
-            $query = $query->where($foreignKey, $localKey);
-            if(isset($condition) && is_callable($condition)) $query = call_user_func($condition, $query);
-            return $query;
-        });
+        $childQuery =  $childModel::where($foreignKey, "=", $localKey);
+        if(isset($condition) && is_callable($condition)) $childQuery = call_user_func($condition, $childQuery);
+        return $childQuery->get();
     }
 
     /**
@@ -48,93 +73,131 @@ class Model extends ModelAbstract
      * @param string $modelName
      * @param string|null $foreignKey
      * @param string|null $localKey
-     * @return mixed
+     * @return static
      */
     public function belongsTo(string $modelName, string $foreignKey = null, string $localKey = null) {
         $childModel = new $modelName();
         $parentModel = new static();
-        $foreignKey = ($foreignKey) ? $foreignKey : $parentModel->table."_".$parentModel->primary_key;
-        $localKey = ($localKey) ? $localKey : $parentModel->primary_key;
+        $foreignKey = ($foreignKey) ? $foreignKey : $parentModel::getTable()."_".$parentModel::getPrimaryKey();
+        $localKey = ($localKey) ? $localKey : $parentModel::getPrimaryKey();
         $localKey = $this->$localKey;
-        return $childModel::query(function($query) use ($foreignKey, $localKey) {
-            return $query->where($foreignKey, $localKey);
-        });
+        return new static($childModel::where($foreignKey, "=", $localKey)->first());
     }
 
     /**
      * @return \Illuminate\Database\Query\Builder
      */
     public static function table() {
-        return DB::table((new static())->table);
+        return app('db')->table(static::getTable());
     }
 
     /**
-     * @param callable $query
-     * @return static
+     * @param $foreignTable
+     * @param $foreignTablePrimary
+     * @param $foreignColumn
+     * @return \Illuminate\Database\Query\Builder
      */
-    public static function query(callable $query) {
-        $query = call_user_func($query, static::table());
-        return static::objectSetter($query->first());
+    public static function join($foreignTable, $foreignTablePrimary, $foreignColumn)
+    {
+        return static::table()->join($foreignTable, $foreignTablePrimary, $foreignColumn);
     }
 
     /**
-     * @param callable $query
-     * @return static[]
+     * @param $foreignTable
+     * @param $foreignTablePrimary
+     * @param $foreignColumn
+     * @return \Illuminate\Database\Query\Builder
      */
-    public static function queryList(callable $query) {
-        $query = call_user_func($query, static::table());
-        return static::listSetter($query->get());
+    public static function leftJoin($foreignTable, $foreignTablePrimary, $foreignColumn)
+    {
+        return static::table()->leftJoin($foreignTable, $foreignTablePrimary, $foreignColumn);
     }
 
     /**
+     * @param $foreignTable
+     * @param $foreignTablePrimary
+     * @param $foreignColumn
+     * @return \Illuminate\Database\Query\Builder
+     */
+    public static function rightJoin($foreignTable, $foreignTablePrimary, $foreignColumn)
+    {
+        return static::table()->rightJoin($foreignTable, $foreignTablePrimary, $foreignColumn);
+    }
+
+    /**
+     * @param $column1
+     * @param $operator
+     * @param $column2
+     * @return \Illuminate\Database\Query\Builder
+     */
+    public static function where($column1, $operator, $column2)
+    {
+        return static::table()->where($column1, $operator, $column2);
+    }
+
+
+    /**
+     * @param string $column
+     * @param array $arrayData
+     * @return \Illuminate\Database\Query\Builder
+     */
+    public static function whereIn($column, $arrayData)
+    {
+        return static::table()->whereIn($column, $arrayData);
+    }
+
+    /**
+     * Find all data by speicific column and value, also you can specify sorting option
      * @param array|string $column
      * @param string|null $value
      * @param string $sorting_column
      * @param string $sorting_dir
-     * @return static[]
+     * @return Collection
      */
     public static function findAllBy($column, $value = null, $sorting_column = "id", $sorting_dir = "desc") {
         if(is_array($column)) {
-            $result = DB::table((new static())->table);
+            $result = app('db')->table(static::getTable());
             foreach($column as $key=>$value) {
                 $result->where($key, $value);
             }
             $result = $result->orderBy($sorting_column, $sorting_dir)->get();
         } else {
 
-            $result = DB::table((new static())->table)->where($column, $value)->orderBy($sorting_column, $sorting_dir)->get();
+            $result = app('db')->table(static::getTable())->where($column, $value)->orderBy($sorting_column, $sorting_dir)->get();
         }
 
-        return static::listSetter($result);
+        return $result;
     }
 
     /**
+     * Count the all data
      * @return integer
      */
     public static function count() {
-        $total = app("CBModelTemporary")->get(static::class, "count", (new static())->table);
+        $total = app("CBModelTemporary")->get(static::class, "count", static::getTable());
         if(!isset($total)) {
-            $total = DB::table((new static())->table)->count();
-            app("CBModelTemporary")->put(static::class, "count", (new static())->table);
+            $total = app('db')->table(static::getTable())->count();
+            app("CBModelTemporary")->put(static::class, "count", static::getTable());
         }
         return $total;
     }
 
     /**
+     * Count the data by specific column and value
      * @param array|string $column
      * @param string|null $value
      * @return integer
      */
     public static function countBy($column, $value = null) {
         if(is_array($column)) {
-            $result = DB::table((new static())->table);
+            $result = app('db')->table(static::getTable());
             foreach($column as $key=>$value) {
                 $result->where($key, $value);
             }
             $result = $result->count();
         } else {
 
-            $result = DB::table((new static())->table)
+            $result = app('db')->table(static::getTable())
                 ->where($column, $value)
                 ->count();
         }
@@ -142,26 +205,27 @@ class Model extends ModelAbstract
     }
 
     /**
+     * Find all data with descending sorting
      * @param $column
-     * @return static[]
+     * @return Collection
      */
     public static function findAllDesc($column = "id") {
-        $result = DB::table((new static())->table)->orderBy($column,"desc")->get();
-        return static::listSetter($result);
+        return app('db')->table(static::getTable())->orderBy($column,"desc")->get();
     }
 
     /**
-     * @param $column
-     * @return static[]
+     * Find all the data with ascending sorting
+     * @param string $column
+     * @return Collection
      */
     public static function findAllAsc($column = "id") {
-        $result = DB::table((new static())->table)->orderBy($column,"asc")->get();
-        return static::listSetter($result);
+        return app('db')->table(static::getTable())->orderBy($column,"asc")->get();
     }
 
     /**
+     * Find all the data without sorting by default
      * @param callable|null $query Query Builder
-     * @return static[]
+     * @return Collection
      */
     public static function findAll(callable $query = null) {
         if(is_callable($query)) {
@@ -170,25 +234,29 @@ class Model extends ModelAbstract
         } else {
             $result = static::table()->get();
         }
-        return static::listSetter($result);
+        return $result;
     }
 
     /**
-     * @return static[]
+     * Get all latest data
+     * @return Collection
      */
     public static function latest() {
-        $result = DB::table((new static())->table)->orderBy((new static())->primary_key,"desc")->get();
-        return static::listSetter($result);
+        return app('db')->table(static::getTable())->orderBy(static::getPrimaryKey(),"desc")->get();
     }
 
     /**
-     * @return static[]
+     * Get all oldest data
+     * @return Collection
      */
     public static function oldest() {
-        $result = DB::table((new static())->table)->orderBy((new static())->primary_key,"asc")->get();
-        return static::listSetter($result);
+        return app('db')->table(static::getTable())->orderBy(static::getPrimaryKey(),"asc")->get();
     }
 
+    /**
+     * Convert model output to array output
+     * @return array
+     */
     public function toArray() {
         $result = [];
         foreach($this as $key=>$val) {
@@ -198,14 +266,15 @@ class Model extends ModelAbstract
     }
 
     /**
+     * Find a data by primary key condition with Model output
      * @param $id
      * @return static
      */
     public static function findById($id) {
         $row = app("CBModelTemporary")->get(static::class, "findById", $id);
         if(!$row) {
-            $row = DB::table((new static())->table)
-                ->where((new static())->primary_key,$id)
+            $row = app('db')->table(static::getTable())
+                ->where(static::getPrimaryKey(),$id)
                 ->first();
             app("CBModelTemporary")->put(static::class, "findById", $id, $row);
         }
@@ -214,6 +283,7 @@ class Model extends ModelAbstract
     }
 
     /**
+     * Find a data by primary key condition with Model output
      * @param $id
      * @return static
      */
@@ -222,17 +292,18 @@ class Model extends ModelAbstract
     }
 
     /**
+     * Find a data by specific column and value with Model output
      * @param array|string $column
      * @param string|null $value
      * @return static
      */
     public static function findBy($column, $value = null) {
         if(is_array($column)) {
-            $row = DB::table((new static())->table)
+            $row = app('db')->table(static::getTable())
                 ->where($column)
                 ->first();
         } else {
-            $row = DB::table((new static())->table)
+            $row = app('db')->table(static::getTable())
                 ->where($column,$value)
                 ->first();
         }
@@ -241,7 +312,7 @@ class Model extends ModelAbstract
     }
 
     /**
-     * To save insert many data
+     * Save many data
      * @param Model[] $data
      */
     public static function bulkInsert(array $data) {
@@ -251,14 +322,13 @@ class Model extends ModelAbstract
             $dataArray = $row->toArray();
             $insertData[] = $dataArray;
         }
-        DB::table((new static())->table)->insertOrIgnore($insertData);
+        app('db')->table(static::getTable())->insertOrIgnore($insertData);
     }
 
     public function save() {
-        $primary_key = (new static())->primary_key;
         $data = [];
         foreach($this as $key=>$val) {
-            if(!in_array($key,[$primary_key])) {
+            if(!in_array($key,[static::getPrimaryKey()])) {
                 if(isset($this->{$key})) {
                     $data[$key] = $val;
                 }
@@ -267,37 +337,39 @@ class Model extends ModelAbstract
 
         unset($data['table'], $data['connection'], $data['primary_key']);
 
-        if($this->{$primary_key}) {
+        if($this->{static::getPrimaryKey()}) {
             if(isset($data['created_at'])) {
                 unset($data['created_at']);
             }
-            DB::table((new static())->table)->where($primary_key, $this->{$primary_key})->update($data);
-            $id = $this->{$primary_key};
+            app('db')->table(static::getTable())->where(static::getPrimaryKey(), $this->{static::getPrimaryKey()})->update($data);
+            $id = $this->{static::getPrimaryKey()};
         } else {
             if(property_exists($this,'created_at')) {
                 $data['created_at'] = date('Y-m-d H:i:s');
             }
-            $id = DB::table((new static())->table)->insertGetId($data);
+            $id = app('db')->table(static::getTable())->insertGetId($data);
         }
 
-        $this->{$primary_key} = $id;
+        $this->{static::getPrimaryKey()} = $id;
         return ($id)?true:false;
     }
 
     /**
+     * Delete the data by specific primary key condition
      * @param $id
      */
     public static function deleteById($id) {
-        DB::table((new static())->table)->where((new static())->primary_key,$id)->delete();
+        app('db')->table(static::getTable())->where(static::getPrimaryKey(),$id)->delete();
     }
 
     /**
+     * Delete the data by specific column and value
      * @param string|array $column
      * @param null $value
      */
     public static function deleteBy($column, $value = null) {
         if(is_array($column)) {
-            $result = DB::table((new static())->table);
+            $result = app('db')->table(static::getTable());
             foreach($column as $key=>$value) {
                 $result->where($key, $value);
             }
@@ -307,12 +379,24 @@ class Model extends ModelAbstract
                 throw new \InvalidArgumentException("Missing argument 2 value");
             }
 
-            DB::table((new static())->table)->where($column,$value)->delete();
+            app('db')->table(static::getTable())->where($column,$value)->delete();
         }
     }
 
-    public function delete() {
-        DB::table((new static())->table)->where((new static())->primary_key, $this->{$primary_key})->delete();
+    /**
+     * Delete all data from table
+     */
+    public static function deleteAll()
+    {
+        app('db')->table(static::getTable())->delete();
     }
+
+    /**
+     * Delete the data selected
+     */
+    public function delete() {
+        app('db')->table(static::getTable())->where(static::getPrimaryKey(), $this->{static::getPrimaryKey()})->delete();
+    }
+
 
 }
