@@ -5,7 +5,7 @@ Repository is a class that define your own query method. And Service is a class 
 ### Requirement
 Laravel / Lumen 5.* | 6.* | 7.* | 8.*
 
-### Install Command (Laravel User)
+### Install Command
 ``composer require crocodic/laravel-model=^2.0``
 
 ### LUMEN USER: 
