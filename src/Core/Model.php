@@ -174,10 +174,10 @@ class Model extends ModelAbstract
      * @return integer
      */
     public static function count() {
-        $total = app("CBModelTemporary")->get(static::class, "count", static::getTable());
+        $total = app("LaravelModelTemporary")->get(static::class, "count", static::getTable());
         if(!isset($total)) {
             $total = app('db')->table(static::getTable())->count();
-            app("CBModelTemporary")->put(static::class, "count", static::getTable());
+            app("LaravelModelTemporary")->put(static::class, "count", static::getTable());
         }
         return $total;
     }
@@ -271,12 +271,12 @@ class Model extends ModelAbstract
      * @return static
      */
     public static function findById($id) {
-        $row = app("CBModelTemporary")->get(static::class, "findById", $id);
+        $row = app("LaravelModelTemporary")->get(static::class, "findById", $id);
         if(!$row) {
             $row = app('db')->table(static::getTable())
                 ->where(static::getPrimaryKey(),$id)
                 ->first();
-            app("CBModelTemporary")->put(static::class, "findById", $id, $row);
+            app("LaravelModelTemporary")->put(static::class, "findById", $id, $row);
         }
 
         return static::objectSetter($row);
