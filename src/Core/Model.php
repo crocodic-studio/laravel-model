@@ -8,6 +8,8 @@
 
 namespace Crocodic\LaravelModel\Core;
 
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Collection;
 
 class Model extends ModelAbstract
@@ -16,7 +18,7 @@ class Model extends ModelAbstract
 
     public function __construct($row = null)
     {
-        if($row) {
+        if(!is_null($row)) {
             foreach($row as $key=>$value) {
                 $this->{$key} = $value;
             }
@@ -85,17 +87,32 @@ class Model extends ModelAbstract
     }
 
     /**
-     * @return \Illuminate\Database\Query\Builder
+     * @return Builder
      */
-    public static function table() {
+    public static function table(): Builder
+    {
         return app('db')->table(static::getTable());
+    }
+
+    /**
+     * @param int $limit
+     * @param callable|null $query
+     * @return LengthAwarePaginator
+     */
+    public static function paginate(int $limit, callable $query = null): LengthAwarePaginator
+    {
+        $data = static::table();
+        if(!is_null($query) && is_callable($query)) {
+            $data = call_user_func($query, $data);
+        }
+        return $data->paginate($limit);
     }
 
     /**
      * @param $foreignTable
      * @param $foreignTablePrimary
      * @param $foreignColumn
-     * @return \Illuminate\Database\Query\Builder
+     * @return Builder
      */
     public static function join($foreignTable, $foreignTablePrimary, $foreignColumn)
     {
@@ -106,7 +123,7 @@ class Model extends ModelAbstract
      * @param $foreignTable
      * @param $foreignTablePrimary
      * @param $foreignColumn
-     * @return \Illuminate\Database\Query\Builder
+     * @return Builder
      */
     public static function leftJoin($foreignTable, $foreignTablePrimary, $foreignColumn)
     {
@@ -117,7 +134,7 @@ class Model extends ModelAbstract
      * @param $foreignTable
      * @param $foreignTablePrimary
      * @param $foreignColumn
-     * @return \Illuminate\Database\Query\Builder
+     * @return Builder
      */
     public static function rightJoin($foreignTable, $foreignTablePrimary, $foreignColumn)
     {
@@ -128,7 +145,7 @@ class Model extends ModelAbstract
      * @param $column1
      * @param $operator
      * @param $column2
-     * @return \Illuminate\Database\Query\Builder
+     * @return Builder
      */
     public static function where($column1, $operator, $column2)
     {
@@ -139,7 +156,7 @@ class Model extends ModelAbstract
     /**
      * @param string $column
      * @param array $arrayData
-     * @return \Illuminate\Database\Query\Builder
+     * @return Builder
      */
     public static function whereIn($column, $arrayData)
     {
