@@ -28,10 +28,13 @@ trait ModelSetter
         $this->{$column} = $value;
     }
 
-
-    private function getTableFromClass()
+    /**
+     * @return string|string[]
+     * @throws \ReflectionException
+     */
+    private function getTableFromClass(): string
     {
-        return str_replace("_model","", $this->convertPascalCaseToKebabCase(basename(static::class)));
+        return str_replace("_model","", $this->convertPascalCaseToKebabCase( (new \ReflectionClass($this))->getShortName() ));
     }
 
     private function getDefaultPrimaryKey()
