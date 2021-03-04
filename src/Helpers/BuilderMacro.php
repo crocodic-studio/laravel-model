@@ -16,7 +16,7 @@ class BuilderMacro
             return $this;
         });
 
-        Builder::macro("with", function($table, $first = null, $second = null) {
+        Builder::macro("with", function($table) {
             /** @var Builder $this */
             if(is_array($table)) {
                 foreach($table as $tbl) {
@@ -24,7 +24,7 @@ class BuilderMacro
                     $this->addSelectTable($tbl);
                 }
             } else {
-                $this->leftJoin($table, $first, "=", $second);
+                $this->leftJoin($table, $table.".id", "=", $table."_id");
                 $this->addSelectTable($table);
             }
         });
