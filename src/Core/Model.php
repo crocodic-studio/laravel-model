@@ -87,11 +87,11 @@ class Model extends ModelAbstract
     }
 
     /**
-     * @return CrocodicBuilder
+     * @return \Crocodic\LaravelModel\Core\Builder
      */
-    public static function table(): CrocodicBuilder
+    public static function table(): \Crocodic\LaravelModel\Core\Builder
     {
-        return app('db2')->table(static::getTable());
+        return app('db')->table(static::getTable());
     }
 
     /**
@@ -158,7 +158,7 @@ class Model extends ModelAbstract
      * @param array $arrayData
      * @return Builder
      */
-    public static function whereIn($column, $arrayData)
+    public static function whereIn(string $column, array $arrayData)
     {
         return static::table()->whereIn($column, $arrayData);
     }
