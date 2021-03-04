@@ -87,11 +87,11 @@ class Model extends ModelAbstract
     }
 
     /**
-     * @return Builder
+     * @return CrocodicBuilder
      */
-    public static function table(): Builder
+    public static function table(): CrocodicBuilder
     {
-        return app('db')->table(static::getTable());
+        return app('db2')->table(static::getTable());
     }
 
     /**

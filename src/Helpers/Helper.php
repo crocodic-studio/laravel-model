@@ -3,9 +3,17 @@
 namespace Crocodic\LaravelModel\Helpers;
 
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class Helper
 {
+    public static function getFields(string $table)
+    {
+        $modelName = Str::studly($table)."Model";
+        $modelClass = new ("\App\Models\\".$modelName)();
+        return get_object_vars($modelClass);
+    }
+
     public static function findPrimaryKey($table, $connection = null)
     {
         $connection = $connection?:config("database.default");
