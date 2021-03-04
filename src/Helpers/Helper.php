@@ -11,7 +11,7 @@ class Helper
     {
         $modelName = "\App\Models\\".Str::studly($table)."Model";
         $modelClass = new $modelName();
-        return get_object_vars($modelClass);
+        return array_keys(get_object_vars($modelClass));
     }
 
     public static function findPrimaryKey($table, $connection = null)
