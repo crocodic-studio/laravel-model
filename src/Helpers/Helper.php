@@ -9,8 +9,8 @@ class Helper
 {
     public static function getFields(string $table)
     {
-        $modelName = Str::studly($table)."Model";
-        $modelClass = new ("\App\Models\\".$modelName)();
+        $modelName = "\App\Models\\".Str::studly($table)."Model";
+        $modelClass = new $modelName();
         return get_object_vars($modelClass);
     }
 
