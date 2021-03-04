@@ -89,7 +89,7 @@ class Model extends ModelAbstract
     /**
      * @return \Crocodic\LaravelModel\Core\Builder
      */
-    public static function table(): \Crocodic\LaravelModel\Core\Builder
+    public static function table()
     {
         return app('db')->table(static::getTable());
     }
