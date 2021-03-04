@@ -283,6 +283,20 @@ $result = FooBar::where("foo","=",1)->first();
 $result = FooBar::table()->where("foo","=",1)->first();
 
 /**
+* Join a table with a simple step
+*/
+$result = FooBar::table()->withTable("related_table")->first();
+
+/**
+* Auto select all from a table, and make them prefix with its table name
+*/
+$result = FooBar::table()
+->join("related_table","related_table.id","=","related_table_id")
+->addSelect("foo_bar.*")
+->addSelectTable("related_table") // This will produce: related_table_id, related_table_created_at, etc
+->first();
+
+/**
 * Find a record by a specific condition
 */
 $result = Foobar::findBy($column, $value = null);
