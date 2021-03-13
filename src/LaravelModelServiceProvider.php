@@ -27,16 +27,6 @@ class LaravelModelServiceProvider extends ServiceProvider
     public function boot()
     {
 
-        Builder::macro('with', function($table, $first, $foreignKey) {
-            $result = $this->getConnection()
-                ->leftJoin($table, $first, "=", $foreignKey);
-            $fields = Helper::getFields($table);
-            foreach($fields as $field) {
-                $result->addSelect($table.".".$field." as ".$table."_".$field);
-            }
-            return $result;
-        });
-
     }
 
     /**
