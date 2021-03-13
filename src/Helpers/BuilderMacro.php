@@ -8,24 +8,30 @@ class BuilderMacro
 {
     public static function registerMacro()
     {
-        Builder::macro("addSelectTable", function($table) {
+        Builder::macro("addSelectTable", function($table, $prefix = null, $exceptColumns = []) {
             $fields = Helper::getFields($table);
             foreach($fields as $field) {
-                $this->addSelect($table.".".$field." as ".$table."_".$field);
+                if(count($exceptColumns) && in_array($field,$exceptColumns)) continue;
+                $prefix = ($prefix) ? $prefix : $table;
+                $this->addSelect($table.".".$field." as ".$prefix."_".$field);
             }
             return $this;
         });
 
-        Builder::macro("withTable", function($table) {
+        Builder::macro("withTable", function($table, $selectionPrefix = null, $exceptColumns = [], $first = null, $operator = "=", $second = null) {
             /** @var \Crocodic\LaravelModel\Core\Builder $this */
             if(is_array($table)) {
                 foreach($table as $tbl) {
-                    $this->leftJoin($tbl,$tbl.".id","=",$this->from."_id");
-                    $this->addSelectTable($tbl);
+                    $first = ($first) ? $first : $tbl.".id";
+                    $second = ($second) ? $second : $this->from."_id";
+                    $this->leftJoin($tbl,$first,$operator,$second);
+                    $this->addSelectTable($tbl, $selectionPrefix, $exceptColumns);
                 }
             } else {
-                $this->leftJoin($table, $table.".id", "=", $table."_id");
-                $this->addSelectTable($table);
+                $first = ($first) ? $first : $table.".id";
+                $second = ($second) ? $second : $table."_id";
+                $this->leftJoin($table, $first, $operator, $second);
+                $this->addSelectTable($table, $selectionPrefix, $exceptColumns);
             }
             return $this;
         });
@@ -35,7 +41,7 @@ class BuilderMacro
             if(substr($keyword,0,1) != "%" && substr($keyword,-1,1) != "%") {
                 $keyword = "%".$keyword."%";
             }
-            $this->whereRaw($column." like '".$keyword."'");
+            $this->where($column, "like", "%".$keyword."%");
         });
     }
 }
