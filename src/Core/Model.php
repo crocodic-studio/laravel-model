@@ -337,6 +337,10 @@ class Model extends ModelAbstract
         foreach($data as $row) {
             /** @var Model $row */
             $dataArray = $row->toArray();
+            unset($dataArray[static::getPrimaryKey()]);
+            if(isset($dataArray['created_at']) && empty($dataArray['created_at'])) {
+                $dataArray['created_at'] = date('Y-m-d H:i:s');
+            }
             $insertData[] = $dataArray;
         }
         app('db')->table(static::getTable())->insertOrIgnore($insertData);
