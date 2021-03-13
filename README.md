@@ -297,6 +297,12 @@ $result = FooBar::table()
 ->first();
 
 /**
+* Add like condition to the query
+*/
+$result = FooBar::table()->like("column",$yourKeyword)->get();
+// It will produce same as FooBar::table()->where("columne","like","%".$yourKeyword."%")->get()
+
+/**
 * Find a record by a specific condition
 */
 $result = Foobar::findBy($column, $value = null);
